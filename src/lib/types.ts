@@ -55,4 +55,10 @@ export interface AnalysisResult {
   reasons: AnalysisReason[];
   actions: string[];
   advisory?: string;
+  // Set by analyzeEmail (slice 9+) when the submitted source had no usable
+  // headers at all (e.g. a bare pasted body with no From/Authentication-
+  // Results), so the sender's identity couldn't be checked. Per CLAUDE.md's
+  // UI section: "If no headers were provided, say the sender couldn't be
+  // verified." Optional/additive so existing callers are unaffected.
+  headerless?: boolean;
 }
