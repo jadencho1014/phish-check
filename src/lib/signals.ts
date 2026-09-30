@@ -134,11 +134,15 @@ function detectLinkMismatch(email: ParsedEmail): Signal | undefined {
 }
 
 // Change-of-payment-details language: a verb ("update", "new", "change",
-// "switch", "redirect", ...) near a payment noun ("bank", "account",
-// "routing", "remittance", "wire"), in either order, plus a standalone
-// gift-card mention. Kept general per CLAUDE.md - not tied to fixture wording.
+// "switch", "redirect", ...) near a payment noun ("bank", "banking",
+// "routing", "remittance", "wire", or "account" qualified as
+// details/number/info), in either order, plus a standalone gift-card
+// mention. Kept general per CLAUDE.md - not tied to fixture wording. Bare
+// "account" is intentionally excluded: it's too common in unrelated notices
+// (password/security changes, "your account", ...) and would false-positive
+// on legitimate mail; CLAUDE.md's trigger is "account-details" specifically.
 const PAYMENT_VERB = "(?:update|updated|updating|new|change|changed|changing|switch|switched|switching|redirect|redirected|redirecting)";
-const PAYMENT_NOUN = "(?:bank|banking|account|routing|remittance|wire)";
+const PAYMENT_NOUN = "(?:bank(?:ing)?|routing|remittance|wire|account\\s+(?:details|number|info(?:rmation)?))";
 const PAYMENT_CHANGE_FORWARD = new RegExp(`\\b${PAYMENT_VERB}\\b[\\s\\S]{0,60}?\\b${PAYMENT_NOUN}\\b`, "i");
 const PAYMENT_CHANGE_BACKWARD = new RegExp(`\\b${PAYMENT_NOUN}\\b[\\s\\S]{0,60}?\\b${PAYMENT_VERB}\\b`, "i");
 const GIFT_CARD_REGEX = /\bgift cards?\b/i;
@@ -213,8 +217,10 @@ function detectLookalikeDomain(email: ParsedEmail, fromDomain: string | null): S
   const senderParts = labelParts(senderLabel).filter((part) => part.length >= MIN_TOKEN_LENGTH);
   if (senderParts.length > 0) {
     const mentionedDomains = extractMentionedDomains(`${email.text}\n${email.html}`);
+    const knownBrandDomains = new Set(BRANDS.flatMap((brand) => brand.domains));
     for (const mentioned of mentionedDomains) {
       if (mentioned === fromDomain) continue;
+      if (knownBrandDomains.has(mentioned)) continue;
       const mentionedLabel = getDomainWithoutSuffix(mentioned) ?? "";
       const mentionedParts = labelParts(mentionedLabel);
       if (senderParts.some((part) => mentionedParts.includes(part))) {
