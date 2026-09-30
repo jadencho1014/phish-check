@@ -6,12 +6,20 @@
 // (anything `new URL()` can't parse, e.g. a bare word or already-defanged
 // text) is a no-op: returned unchanged.
 //
-// Stub only for now (slice 9 test-writer pass) - implementer fills this in
-// against src/lib/defang.test.ts.
+// Matches "http://" or "https://" followed by the host (everything up to
+// the first "/", "?" or "#") and captures the rest of the URL untouched.
+// A plain regex (rather than the `URL` constructor) is used deliberately:
+// `new URL("https://x.com")` normalizes the pathname to "/", which would
+// add a trailing slash the input never had - this regex only rewrites what
+// CLAUDE.md asks for and leaves everything else byte-for-byte as given.
+const URL_REGEX = /^(https?):\/\/([^/?#]+)([\s\S]*)$/i;
 
 export function defang(url: string): string {
-  // TODO(implementer): parse `url`, replace "http(s)" with "hxxp(s)" in the
-  // scheme, and replace "." with "[.]" only within the hostname. Leave
-  // non-URL strings unchanged.
-  return url;
+  const match = url.match(URL_REGEX);
+  if (!match) return url;
+
+  const [, scheme = "", host = "", rest = ""] = match;
+  const defangedScheme = scheme.toLowerCase() === "https" ? "hxxps" : "hxxp";
+  const defangedHost = host.replace(/\./g, "[.]");
+  return `${defangedScheme}://${defangedHost}${rest}`;
 }

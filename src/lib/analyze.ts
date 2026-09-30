@@ -79,6 +79,15 @@ const SIGNAL_TITLES: Record<SignalId, string> = {
   RISKY_ATTACHMENT: "Attachment type is commonly used to deliver malware",
 };
 
+// Human-readable "title: evidence" lines for the UI's collapsible details
+// section (never the raw SignalId - see AnalysisResult.signalSummaries in
+// types.ts). Excludes "trust" signals, which are informational only.
+function summarizeSignals(signals: Signal[]): string[] {
+  return signals
+    .filter((s) => s.severity !== "trust")
+    .map((s) => `${SIGNAL_TITLES[s.id]}: ${s.evidence}`);
+}
+
 function rulesOnlyResult(floor: Verdict, signals: Signal[]): AnalysisResult {
   const notableSignals = signals.filter((s) => s.severity !== "trust");
 
@@ -113,11 +122,26 @@ export async function analyzeEmail(
   const recipientDomain = getRecipientDomain(parsed) ?? "";
   const floor = combine(signals);
 
-  if (opts.client) {
-    const authResultsHeader = parsed.headers.find(
-      (h) => h.key.toLowerCase() === "authentication-results",
-    );
+  const authResultsHeader = parsed.headers.find(
+    (h) => h.key.toLowerCase() === "authentication-results",
+  );
 
+  // "If no headers were provided, say the sender couldn't be verified" per
+  // CLAUDE.md's UI section - a bare pasted body has no headers at all, so
+  // From/Authentication-Results can never be checked.
+  const headerless = parsed.headers.length === 0;
+
+  // Extra fields the UI's collapsible details section renders (auth,
+  // defanged links, signals) - additive on top of whichever
+  // reasons/actions/verdict/advisory come from the LLM or rules-only path.
+  const uiExtras: Pick<AnalysisResult, "headerless" | "authSummary" | "links" | "signalSummaries"> = {
+    headerless,
+    authSummary: authResultsHeader?.value ?? "No Authentication-Results header present",
+    links: parsed.links,
+    signalSummaries: summarizeSignals(signals),
+  };
+
+  if (opts.client) {
     const llmInput: LlmInput = {
       headersSummary: parsed.headers.map((h) => `${h.key}: ${h.value}`).join("\n"),
       authResults: authResultsHeader?.value ?? "(none)",
@@ -136,9 +160,10 @@ export async function analyzeEmail(
         reasons: llmResult.reasons,
         actions: llmResult.actions,
         ...(llmResult.advisory !== undefined ? { advisory: llmResult.advisory } : {}),
+        ...uiExtras,
       };
     }
   }
 
-  return rulesOnlyResult(floor, signals);
+  return { ...rulesOnlyResult(floor, signals), ...uiExtras };
 }

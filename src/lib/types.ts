@@ -61,4 +61,15 @@ export interface AnalysisResult {
   // UI section: "If no headers were provided, say the sender couldn't be
   // verified." Optional/additive so existing callers are unaffected.
   headerless?: boolean;
+  // The following are populated by analyzeEmail (slice 9) purely to feed the
+  // UI's collapsible "details" section (CLAUDE.md's UI section: "auth,
+  // defanged links, signals"). All optional/additive - no existing caller or
+  // test constructs/compares a full AnalysisResult object, so these are safe
+  // extensions (see analyze.test.ts/llm.test.ts/route.test.ts, which only
+  // assert individual fields like verdict/reasons/actions).
+  authSummary?: string;
+  links?: EmailLink[];
+  // Human-readable "title: evidence" summaries of the notable (non-trust)
+  // rule signals that fired, for display only - never the raw SignalId.
+  signalSummaries?: string[];
 }
