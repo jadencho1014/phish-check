@@ -12,8 +12,8 @@ function buildRaw(headers: string[], body = "Hello,\r\n\r\nJust a quick note.\r\
   );
 }
 
-async function signalsFor(headers: string[]) {
-  const parsed = await parseEmail(buildRaw(headers));
+async function signalsFor(headers: string[], body?: string) {
+  const parsed = await parseEmail(body === undefined ? buildRaw(headers) : buildRaw(headers, body));
   return detectSignals(parsed);
 }
 
@@ -147,5 +147,101 @@ describe("detectSignals - auth + reply-to (slice 3)", () => {
 
     expect(ids(signals)).toContain("AUTH_FAIL");
     expect(ids(signals)).not.toContain("AUTH_ALIGNED_PASS");
+  });
+});
+
+describe("detectSignals - impersonation (slice 4)", () => {
+  it("brand token in sender domain, hyphen-normalized -> LOOKALIKE_DOMAIN (high)", async () => {
+    const signals = await signalsFor([
+      "Authentication-Results: mx.unrelated-recipient.example; spf=pass smtp.mailfrom=docusign-notify.net; dkim=pass header.d=docusign-notify.net; dmarc=pass header.from=docusign-notify.net",
+      'From: "DocuSign" <notify@docusign-notify.net>',
+      "To: pat@unrelated-recipient.example",
+      "Subject: You have a document waiting",
+      "Date: Mon, 05 Jan 2026 09:00:00 +0000",
+    ]);
+
+    const lookalike = signals.find((s) => s.id === "LOOKALIKE_DOMAIN");
+    expect(lookalike).toBeDefined();
+    expect(lookalike?.severity).toBe("high");
+  });
+
+  it("display name claims a brand from a non-brand domain -> LOOKALIKE_DOMAIN", async () => {
+    const signals = await signalsFor([
+      "Authentication-Results: mx.unrelated-recipient.example; spf=pass smtp.mailfrom=unrelated-mailer.example; dkim=pass header.d=unrelated-mailer.example; dmarc=pass header.from=unrelated-mailer.example",
+      'From: "DocuSign Notifications" <random@unrelated-mailer.example>',
+      "To: pat@unrelated-recipient.example",
+      "Subject: Document ready for signature",
+      "Date: Mon, 05 Jan 2026 09:00:00 +0000",
+    ]);
+
+    expect(ids(signals)).toContain("LOOKALIKE_DOMAIN");
+  });
+
+  it("body footer shares a distinctive token with sender's domain but a different registrable domain -> LOOKALIKE_DOMAIN", async () => {
+    const signals = await signalsFor(
+      [
+        "Authentication-Results: mx.unrelated-recipient.example; spf=pass smtp.mailfrom=acme-docs.example; dkim=pass header.d=acme-docs.example; dmarc=pass header.from=acme-docs.example",
+        'From: "Acme Docs" <notify@acme-docs.example>',
+        "To: pat@unrelated-recipient.example",
+        "Subject: Your document is ready to review",
+        "Date: Mon, 05 Jan 2026 09:00:00 +0000",
+      ],
+      "Hello,\r\n\r\nYour document is ready to review.\r\n\r\nAcme Docs, Inc. | acme.example\r\n",
+    );
+
+    expect(ids(signals)).toContain("LOOKALIKE_DOMAIN");
+  });
+
+  it("negative: brand's real subdomain (notifications.docusign.net) -> no LOOKALIKE_DOMAIN", async () => {
+    const signals = await signalsFor([
+      "Authentication-Results: mx.unrelated-recipient.example; spf=pass smtp.mailfrom=notifications.docusign.net; dkim=pass header.d=docusign.net; dmarc=pass header.from=notifications.docusign.net",
+      'From: "DocuSign" <notify@notifications.docusign.net>',
+      "To: pat@unrelated-recipient.example",
+      "Subject: You have a document waiting",
+      "Date: Mon, 05 Jan 2026 09:00:00 +0000",
+    ]);
+
+    expect(ids(signals)).not.toContain("LOOKALIKE_DOMAIN");
+  });
+
+  it("negative: unrelated third-party domain mentioned in body with no shared token -> no LOOKALIKE_DOMAIN", async () => {
+    const signals = await signalsFor(
+      [
+        "Authentication-Results: mx.riverton-outfitters.example; spf=pass smtp.mailfrom=cobalt-freight.example; dkim=pass header.d=cobalt-freight.example; dmarc=pass header.from=cobalt-freight.example",
+        'From: "Cobalt Freight Billing" <billing@cobalt-freight.example>',
+        "To: ops@riverton-outfitters.example",
+        "Subject: Invoice #4471",
+        "Date: Mon, 05 Jan 2026 09:00:00 +0000",
+      ],
+      "Hello,\r\n\r\nInvoice attached. For scheduling questions see our partner's site at totally-unrelated-service.example.\r\n",
+    );
+
+    expect(ids(signals)).not.toContain("LOOKALIKE_DOMAIN");
+  });
+
+  it("From display name contains a >=4-char word from the recipient's own domain, sender external -> INTERNAL_IMPERSONATION (medium)", async () => {
+    const signals = await signalsFor([
+      "Authentication-Results: mx.meridianworks.example; spf=pass smtp.mailfrom=external-mailer.example; dkim=pass header.d=external-mailer.example; dmarc=pass header.from=external-mailer.example",
+      'From: "Meridian Works Billing" <billing@external-mailer.example>',
+      "To: ops@meridianworks.example",
+      "Subject: Updated billing details",
+      "Date: Mon, 05 Jan 2026 09:00:00 +0000",
+    ]);
+
+    const internal = signals.find((s) => s.id === "INTERNAL_IMPERSONATION");
+    expect(internal).toBeDefined();
+    expect(internal?.severity).toBe("medium");
+  });
+
+  it("negative: sender's own domain IS the recipient's domain -> no INTERNAL_IMPERSONATION", async () => {
+    const signals = await signalsFor([
+      "Authentication-Results: mx.meridianworks.example; spf=pass smtp.mailfrom=meridianworks.example; dkim=pass header.d=meridianworks.example; dmarc=pass header.from=meridianworks.example",
+      'From: "Meridian Works Billing" <billing@meridianworks.example>',
+      "To: ops@meridianworks.example",
+      "Subject: Updated billing details",
+      "Date: Mon, 05 Jan 2026 09:00:00 +0000",
+    ]);
+
+    expect(ids(signals)).not.toContain("INTERNAL_IMPERSONATION");
   });
 });

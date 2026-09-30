@@ -1,6 +1,13 @@
 // Pure rule detectors: ParsedEmail -> Signal[]. See CLAUDE.md's Detection
 // section for the signal table. Implemented incrementally across slices 3-5
 // (auth/reply-to, then impersonation, then link/payment/attachment).
+//
+// TODO (slice 4, implementer): LOOKALIKE_DOMAIN and INTERNAL_IMPERSONATION
+// are not yet implemented here. brands.ts (well-known brand -> domains
+// table) is ready to be consulted for LOOKALIKE_DOMAIN; the recipient's
+// domain label for INTERNAL_IMPERSONATION should be derived from the `To`
+// header already present in email.headers. See signals.test.ts's
+// "impersonation (slice 4)" describe block for the expected behaviour.
 
 import { getDomain } from "tldts";
 import type { ParsedEmail, ParsedEmailHeader, Signal } from "./types";
