@@ -21,6 +21,62 @@ function ids(signals: { id: string }[]): string[] {
   return signals.map((s) => s.id);
 }
 
+// Multipart builder for slice 5 tests (link/attachment signals need real
+// text+html parts and/or a MIME attachment, unlike the plain-text helper
+// above).
+function buildMultipart(
+  headers: string[],
+  opts: { text: string; html?: string; attachment?: { filename: string; contentType?: string } },
+): string {
+  const bodyPart = opts.html
+    ? [
+        'Content-Type: multipart/alternative; boundary="ALT"',
+        "",
+        "--ALT",
+        'Content-Type: text/plain; charset="utf-8"',
+        "",
+        opts.text,
+        "",
+        "--ALT",
+        'Content-Type: text/html; charset="utf-8"',
+        "",
+        opts.html,
+        "",
+        "--ALT--",
+        "",
+      ]
+    : ['Content-Type: text/plain; charset="utf-8"', "", opts.text, ""];
+
+  const attachmentPart = opts.attachment
+    ? [
+        "--MIXED",
+        `Content-Type: ${opts.attachment.contentType ?? "application/octet-stream"}; name="${opts.attachment.filename}"`,
+        `Content-Disposition: attachment; filename="${opts.attachment.filename}"`,
+        "Content-Transfer-Encoding: base64",
+        "",
+        "ZmFrZSBjb250ZW50",
+        "",
+      ]
+    : [];
+
+  return [
+    ...headers,
+    "MIME-Version: 1.0",
+    'Content-Type: multipart/mixed; boundary="MIXED"',
+    "",
+    "--MIXED",
+    ...bodyPart,
+    ...attachmentPart,
+    "--MIXED--",
+    "",
+  ].join("\r\n");
+}
+
+async function signalsForRaw(raw: string) {
+  const parsed = await parseEmail(raw);
+  return detectSignals(parsed);
+}
+
 describe("detectSignals - auth + reply-to (slice 3)", () => {
   it("spf=softfail on the topmost Authentication-Results -> AUTH_FAIL (high)", async () => {
     const signals = await signalsFor([
@@ -244,4 +300,163 @@ describe("detectSignals - impersonation (slice 4)", () => {
 
     expect(ids(signals)).not.toContain("INTERNAL_IMPERSONATION");
   });
+});
+
+describe("detectSignals - link/payment/attachment (slice 5)", () => {
+  it("html anchor text names one domain but href goes elsewhere -> LINK_MISMATCH (critical)", async () => {
+    const raw = buildMultipart(
+      [
+        "Authentication-Results: mx.summit-holdings.example; spf=pass smtp.mailfrom=granite-bank.example; dkim=pass header.d=granite-bank.example; dmarc=pass header.from=granite-bank.example",
+        'From: "Granite Bank Alerts" <alerts@granite-bank.example>',
+        "To: pat@summit-holdings.example",
+        "Subject: Please verify your account",
+        "Date: Mon, 05 Jan 2026 09:00:00 +0000",
+      ],
+      {
+        text: "Please verify your account using the link in this email.",
+        html: '<p>Please verify your account at <a href="https://secure-login-portal.example/verify">https://granite-bank.example/verify</a></p>',
+      },
+    );
+
+    const signals = await signalsForRaw(raw);
+    const mismatch = signals.find((s) => s.id === "LINK_MISMATCH");
+    expect(mismatch).toBeDefined();
+    expect(mismatch?.severity).toBe("critical");
+  });
+
+  it("text/plain part links to one domain, html part links to a different one -> LINK_MISMATCH", async () => {
+    const raw = buildMultipart(
+      [
+        "Authentication-Results: mx.summit-holdings.example; spf=pass smtp.mailfrom=polaris-freight.example; dkim=pass header.d=polaris-freight.example; dmarc=pass header.from=polaris-freight.example",
+        'From: "Polaris Freight" <dispatch@polaris-freight.example>',
+        "To: pat@summit-holdings.example",
+        "Subject: Your shipment is on the way",
+        "Date: Mon, 05 Jan 2026 09:00:00 +0000",
+      ],
+      {
+        text: "Track your shipment: https://tracking.polaris-freight.example/abc123",
+        html: '<p>Track your shipment: <a href="https://tracking.other-carrier.example/abc123">track here</a></p>',
+      },
+    );
+
+    const signals = await signalsForRaw(raw);
+    expect(ids(signals)).toContain("LINK_MISMATCH");
+  });
+
+  it("negative: generic link text ('Click here') to a tracker subdomain of the sender's own domain -> no LINK_MISMATCH", async () => {
+    const raw = buildMultipart(
+      [
+        "Authentication-Results: mx.summit-holdings.example; spf=pass smtp.mailfrom=lumen-parts.example; dkim=pass header.d=lumen-parts.example; dmarc=pass header.from=lumen-parts.example",
+        'From: "Lumen Parts" <billing@lumen-parts.example>',
+        "To: pat@summit-holdings.example",
+        "Subject: Your statement is ready",
+        "Date: Mon, 05 Jan 2026 09:00:00 +0000",
+      ],
+      {
+        text: "Please review your statement, attached.",
+        html: '<p>Please review your statement. <a href="https://click.lumen-parts.example/track?id=99">Click here</a></p>',
+      },
+    );
+
+    const signals = await signalsForRaw(raw);
+    expect(ids(signals)).not.toContain("LINK_MISMATCH");
+  });
+
+  it("bank/wire account-change request -> PAYMENT_CHANGE_REQUEST (medium) alone", async () => {
+    const signals = await signalsFor(
+      [
+        "Authentication-Results: mx.summit-holdings.example; spf=pass smtp.mailfrom=vantage-components.example; dkim=pass header.d=vantage-components.example; dmarc=pass header.from=vantage-components.example",
+        'From: "Vantage Components AP" <ap@vantage-components.example>',
+        "To: ops@summit-holdings.example",
+        "Subject: Updated remittance details",
+        "Date: Mon, 05 Jan 2026 09:00:00 +0000",
+      ],
+      "Hello,\r\n\r\nPlease update our remittance account to the following: routing number 021000021, account number 004567890123. Kindly direct all future payments to this new account.\r\n\r\nThanks,\r\nAP Team\r\n",
+    );
+
+    const paymentChange = signals.find((s) => s.id === "PAYMENT_CHANGE_REQUEST");
+    expect(paymentChange).toBeDefined();
+    expect(paymentChange?.severity).toBe("medium");
+    expect(ids(signals)).not.toContain("REPLY_TO_MISMATCH");
+  });
+
+  it("bank/wire account-change request + REPLY_TO_MISMATCH -> PAYMENT_CHANGE_REQUEST escalates to high", async () => {
+    const signals = await signalsFor(
+      [
+        "Authentication-Results: mx.summit-holdings.example; spf=pass smtp.mailfrom=vantage-components.example; dkim=pass header.d=vantage-components.example; dmarc=pass header.from=vantage-components.example",
+        'From: "Vantage Components AP" <ap@vantage-components.example>',
+        "Reply-To: finance@offsite-collections.example",
+        "To: ops@summit-holdings.example",
+        "Subject: Updated remittance details",
+        "Date: Mon, 05 Jan 2026 09:00:00 +0000",
+      ],
+      "Hello,\r\n\r\nPlease update our remittance account to the following: routing number 021000021, account number 004567890123. Kindly direct all future payments to this new account.\r\n\r\nThanks,\r\nAP Team\r\n",
+    );
+
+    expect(ids(signals)).toContain("REPLY_TO_MISMATCH");
+    const paymentChange = signals.find((s) => s.id === "PAYMENT_CHANGE_REQUEST");
+    expect(paymentChange).toBeDefined();
+    expect(paymentChange?.severity).toBe("high");
+  });
+
+  it("negative: ordinary invoice with normal payment terms (no change requested) -> no PAYMENT_CHANGE_REQUEST", async () => {
+    const signals = await signalsFor(
+      [
+        "Authentication-Results: mx.summit-holdings.example; spf=pass smtp.mailfrom=vantage-components.example; dkim=pass header.d=vantage-components.example; dmarc=pass header.from=vantage-components.example",
+        'From: "Vantage Components AP" <ap@vantage-components.example>',
+        "To: ops@summit-holdings.example",
+        "Subject: Invoice #8823",
+        "Date: Mon, 05 Jan 2026 09:00:00 +0000",
+      ],
+      "Hello,\r\n\r\nInvoice #8823 is attached. Payment terms: Net 30. Please remit payment via wire transfer to our account on file.\r\n\r\nThanks,\r\nAP Team\r\n",
+    );
+
+    expect(ids(signals)).not.toContain("PAYMENT_CHANGE_REQUEST");
+  });
+
+  it.each(["invoice.exe", "resume.docm", "invoice.pdf.exe"])(
+    "risky attachment %s -> RISKY_ATTACHMENT (high)",
+    async (filename) => {
+      const raw = buildMultipart(
+        [
+          "Authentication-Results: mx.summit-holdings.example; spf=pass smtp.mailfrom=vantage-components.example; dkim=pass header.d=vantage-components.example; dmarc=pass header.from=vantage-components.example",
+          'From: "Vantage Components AP" <ap@vantage-components.example>',
+          "To: ops@summit-holdings.example",
+          "Subject: Document attached",
+          "Date: Mon, 05 Jan 2026 09:00:00 +0000",
+        ],
+        {
+          text: "Please see the attached document.",
+          attachment: { filename },
+        },
+      );
+
+      const signals = await signalsForRaw(raw);
+      const risky = signals.find((s) => s.id === "RISKY_ATTACHMENT");
+      expect(risky).toBeDefined();
+      expect(risky?.severity).toBe("high");
+    },
+  );
+
+  it.each(["invoice.pdf", "contract.docx"])(
+    "negative: plain %s attachment -> no RISKY_ATTACHMENT",
+    async (filename) => {
+      const raw = buildMultipart(
+        [
+          "Authentication-Results: mx.summit-holdings.example; spf=pass smtp.mailfrom=vantage-components.example; dkim=pass header.d=vantage-components.example; dmarc=pass header.from=vantage-components.example",
+          'From: "Vantage Components AP" <ap@vantage-components.example>',
+          "To: ops@summit-holdings.example",
+          "Subject: Document attached",
+          "Date: Mon, 05 Jan 2026 09:00:00 +0000",
+        ],
+        {
+          text: "Please see the attached document.",
+          attachment: { filename },
+        },
+      );
+
+      const signals = await signalsForRaw(raw);
+      expect(ids(signals)).not.toContain("RISKY_ATTACHMENT");
+    },
+  );
 });
