@@ -1,16 +1,16 @@
 // Pure rule detectors: ParsedEmail -> Signal[]. See CLAUDE.md's Detection
 // section for the signal table. Implemented incrementally across slices 3-5
 // (auth/reply-to, then impersonation, then link/payment/attachment).
-//
-// TODO (slice 4, implementer): LOOKALIKE_DOMAIN and INTERNAL_IMPERSONATION
-// are not yet implemented here. brands.ts (well-known brand -> domains
-// table) is ready to be consulted for LOOKALIKE_DOMAIN; the recipient's
-// domain label for INTERNAL_IMPERSONATION should be derived from the `To`
-// header already present in email.headers. See signals.test.ts's
-// "impersonation (slice 4)" describe block for the expected behaviour.
 
-import { getDomain } from "tldts";
+import { getDomain, getDomainWithoutSuffix } from "tldts";
+import { BRANDS } from "./brands";
 import type { ParsedEmail, ParsedEmailHeader, Signal } from "./types";
+
+// Domain-like mention in free text: at least two dot-separated labels.
+const DOMAIN_MENTION_REGEX =
+  /\b[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+\b/g;
+
+const MIN_TOKEN_LENGTH = 4;
 
 function findHeader(headers: ParsedEmailHeader[], name: string): ParsedEmailHeader | undefined {
   const lower = name.toLowerCase();
@@ -37,6 +37,119 @@ function extractAuthToken(authResultsValue: string, mechanism: string): string |
   const regex = new RegExp(`\\b${mechanism}\\s*=\\s*(\\w+)`, "i");
   const match = authResultsValue.match(regex);
   return match?.[1]?.toLowerCase();
+}
+
+function extractDisplayName(headerValue: string | undefined): string {
+  if (!headerValue) return "";
+  const angleIndex = headerValue.indexOf("<");
+  const namePart = angleIndex === -1 ? "" : headerValue.slice(0, angleIndex);
+  return namePart.trim().replace(/^["']|["']$/g, "").trim();
+}
+
+function normalizeToken(value: string): string {
+  return value.toLowerCase().replace(/-/g, "");
+}
+
+function labelParts(label: string): string[] {
+  return label
+    .toLowerCase()
+    .split("-")
+    .filter((part) => part.length > 0);
+}
+
+function extractMentionedDomains(text: string): string[] {
+  const matches = text.match(DOMAIN_MENTION_REGEX) ?? [];
+  const domains = new Set<string>();
+  for (const match of matches) {
+    const domain = getDomain(match);
+    if (domain) domains.add(domain);
+  }
+  return [...domains];
+}
+
+function detectLookalikeDomain(email: ParsedEmail, fromDomain: string | null): Signal | undefined {
+  if (!fromDomain) return undefined;
+
+  const senderLabel = getDomainWithoutSuffix(fromDomain) ?? "";
+  const normalizedSenderLabel = normalizeToken(senderLabel);
+
+  // A: sender domain contains a known brand token (ignoring hyphens) but
+  // isn't actually that brand's domain.
+  for (const brand of BRANDS) {
+    if (normalizedSenderLabel.includes(brand.name) && !brand.domains.includes(fromDomain)) {
+      return {
+        id: "LOOKALIKE_DOMAIN",
+        severity: "high",
+        evidence: `Sender domain "${fromDomain}" resembles ${brand.name} but is not a known ${brand.name} domain`,
+      };
+    }
+  }
+
+  // B: From display name claims a known brand from a non-brand domain.
+  const fromHeader = findHeader(email.headers, "From");
+  const displayName = extractDisplayName(fromHeader?.value).toLowerCase();
+  for (const brand of BRANDS) {
+    if (displayName.includes(brand.name) && !brand.domains.includes(fromDomain)) {
+      return {
+        id: "LOOKALIKE_DOMAIN",
+        severity: "high",
+        evidence: `Display name "${extractDisplayName(fromHeader?.value)}" claims ${brand.name} but sender domain is "${fromDomain}"`,
+      };
+    }
+  }
+
+  // C: body mentions a domain sharing a distinctive token with the sender's
+  // own domain but is a different registrable domain.
+  const senderParts = labelParts(senderLabel).filter((part) => part.length >= MIN_TOKEN_LENGTH);
+  if (senderParts.length > 0) {
+    const mentionedDomains = extractMentionedDomains(`${email.text}\n${email.html}`);
+    for (const mentioned of mentionedDomains) {
+      if (mentioned === fromDomain) continue;
+      const mentionedLabel = getDomainWithoutSuffix(mentioned) ?? "";
+      const mentionedParts = labelParts(mentionedLabel);
+      if (senderParts.some((part) => mentionedParts.includes(part))) {
+        return {
+          id: "LOOKALIKE_DOMAIN",
+          severity: "high",
+          evidence: `Body mentions "${mentioned}", which shares a distinctive token with sender domain "${fromDomain}"`,
+        };
+      }
+    }
+  }
+
+  return undefined;
+}
+
+function detectInternalImpersonation(email: ParsedEmail, fromDomain: string | null): Signal | undefined {
+  const toHeader = findHeader(email.headers, "To");
+  const recipientDomain = registrableDomainOfAddress(extractEmailAddress(toHeader?.value));
+  if (!recipientDomain || !fromDomain || fromDomain === recipientDomain) return undefined;
+
+  const recipientLabel = normalizeToken(getDomainWithoutSuffix(recipientDomain) ?? "");
+  if (recipientLabel.length < MIN_TOKEN_LENGTH) return undefined;
+
+  const fromHeader = findHeader(email.headers, "From");
+  const replyToHeader = findHeader(email.headers, "Reply-To");
+
+  for (const header of [fromHeader, replyToHeader]) {
+    const displayName = extractDisplayName(header?.value);
+    const words = displayName
+      .toLowerCase()
+      .split(/[^a-z]+/)
+      .filter((word) => word.length >= MIN_TOKEN_LENGTH);
+
+    for (const word of words) {
+      if (recipientLabel.includes(word)) {
+        return {
+          id: "INTERNAL_IMPERSONATION",
+          severity: "medium",
+          evidence: `Display name "${displayName}" echoes recipient domain "${recipientDomain}", but sender domain is "${fromDomain}"`,
+        };
+      }
+    }
+  }
+
+  return undefined;
 }
 
 export function detectSignals(email: ParsedEmail): Signal[] {
@@ -71,9 +184,9 @@ export function detectSignals(email: ParsedEmail): Signal[] {
 
   const fromHeader = findHeader(email.headers, "From");
   const replyToHeader = findHeader(email.headers, "Reply-To");
+  const fromDomain = registrableDomainOfAddress(extractEmailAddress(fromHeader?.value));
 
   if (replyToHeader) {
-    const fromDomain = registrableDomainOfAddress(extractEmailAddress(fromHeader?.value));
     const replyToDomain = registrableDomainOfAddress(extractEmailAddress(replyToHeader.value));
 
     if (fromDomain && replyToDomain && fromDomain !== replyToDomain) {
@@ -84,6 +197,12 @@ export function detectSignals(email: ParsedEmail): Signal[] {
       });
     }
   }
+
+  const lookalike = detectLookalikeDomain(email, fromDomain);
+  if (lookalike) signals.push(lookalike);
+
+  const internalImpersonation = detectInternalImpersonation(email, fromDomain);
+  if (internalImpersonation) signals.push(internalImpersonation);
 
   return signals;
 }
