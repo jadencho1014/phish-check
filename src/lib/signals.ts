@@ -240,9 +240,17 @@ function detectLookalikeDomain(email: ParsedEmail, fromDomain: string | null): S
   return undefined;
 }
 
-function detectInternalImpersonation(email: ParsedEmail, fromDomain: string | null): Signal | undefined {
+// Recipient's registrable domain, derived from the To header. Exported so
+// analyze.ts's LLM-input wiring (recipientDomain) reuses the exact same
+// tldts-based logic as this signal's own recipient-domain derivation,
+// instead of a second, potentially divergent implementation.
+export function getRecipientDomain(email: ParsedEmail): string | null {
   const toHeader = findHeader(email.headers, "To");
-  const recipientDomain = registrableDomainOfAddress(extractEmailAddress(toHeader?.value));
+  return registrableDomainOfAddress(extractEmailAddress(toHeader?.value));
+}
+
+function detectInternalImpersonation(email: ParsedEmail, fromDomain: string | null): Signal | undefined {
+  const recipientDomain = getRecipientDomain(email);
   if (!recipientDomain || !fromDomain || fromDomain === recipientDomain) return undefined;
 
   // Tokenize the recipient's domain label on hyphen boundaries. A hyphenated

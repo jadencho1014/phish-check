@@ -16,8 +16,10 @@
 // parseEmail/detectSignals/llm wiring for the full analyze() pipeline lands
 // in later slices (7-8).
 
-import type { AnalysisResult, Signal, Verdict } from "./types";
-import type { ResponsesClient } from "./llm";
+import type { AnalysisReason, AnalysisResult, Signal, SignalId, Verdict } from "./types";
+import { callLlm, type LlmInput, type ResponsesClient } from "./llm";
+import { parseEmail } from "./parse";
+import { detectSignals, getRecipientDomain } from "./signals";
 
 // combineWithLlm: how the LLM's verdict (or null on fallback, per llm.ts) is
 // reconciled with the rules-only floor from combine() above. Per CLAUDE.md's
@@ -63,9 +65,80 @@ export interface AnalyzeOptions {
   client?: ResponsesClient;
 }
 
+// Generic, human-readable title per signal ID, used only in the rules-only
+// fallback below (no LLM available). Kept general/non-fixture-specific per
+// CLAUDE.md's overfitting rule.
+const SIGNAL_TITLES: Record<SignalId, string> = {
+  AUTH_FAIL: "Sender authentication failed",
+  AUTH_ALIGNED_PASS: "Sender authentication passed",
+  REPLY_TO_MISMATCH: "Reply-To domain differs from sender",
+  LINK_MISMATCH: "Link destination doesn't match its visible text",
+  LOOKALIKE_DOMAIN: "Sender domain resembles a known brand",
+  INTERNAL_IMPERSONATION: "Sender name echoes your own organization",
+  PAYMENT_CHANGE_REQUEST: "Requests a payment or account-details change",
+  RISKY_ATTACHMENT: "Attachment type is commonly used to deliver malware",
+};
+
+function rulesOnlyResult(floor: Verdict, signals: Signal[]): AnalysisResult {
+  const notableSignals = signals.filter((s) => s.severity !== "trust");
+
+  const reasons: AnalysisReason[] = [
+    {
+      title: "Rules-only assessment",
+      explanation:
+        "No AI review was available for this message, so this verdict is based only on automated rule checks.",
+    },
+    ...notableSignals.map((s) => ({
+      title: SIGNAL_TITLES[s.id],
+      explanation: s.evidence,
+    })),
+  ];
+
+  return {
+    verdict: floor,
+    reasons,
+    actions: [
+      "Do not click any links, open attachments, or reply.",
+      "Verify with the sender through a separate, known channel before taking any action.",
+    ],
+  };
+}
+
 export async function analyzeEmail(
-  _raw: string,
-  _opts: AnalyzeOptions = {},
+  raw: string,
+  opts: AnalyzeOptions = {},
 ): Promise<AnalysisResult> {
-  throw new Error("not implemented");
+  const parsed = await parseEmail(raw);
+  const signals = detectSignals(parsed);
+  const recipientDomain = getRecipientDomain(parsed) ?? "";
+  const floor = combine(signals);
+
+  if (opts.client) {
+    const authResultsHeader = parsed.headers.find(
+      (h) => h.key.toLowerCase() === "authentication-results",
+    );
+
+    const llmInput: LlmInput = {
+      headersSummary: parsed.headers.map((h) => `${h.key}: ${h.value}`).join("\n"),
+      authResults: authResultsHeader?.value ?? "(none)",
+      text: parsed.text,
+      links: parsed.links,
+      attachments: parsed.attachments,
+      signals,
+      recipientDomain,
+    };
+
+    const llmResult = await callLlm(opts.client, llmInput);
+    if (llmResult) {
+      const finalVerdict = combineWithLlm(floor, llmResult.verdict);
+      return {
+        verdict: finalVerdict,
+        reasons: llmResult.reasons,
+        actions: llmResult.actions,
+        ...(llmResult.advisory !== undefined ? { advisory: llmResult.advisory } : {}),
+      };
+    }
+  }
+
+  return rulesOnlyResult(floor, signals);
 }
