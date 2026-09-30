@@ -46,10 +46,6 @@ function extractDisplayName(headerValue: string | undefined): string {
   return namePart.trim().replace(/^["']|["']$/g, "").trim();
 }
 
-function normalizeToken(value: string): string {
-  return value.toLowerCase().replace(/-/g, "");
-}
-
 function labelParts(label: string): string[] {
   return label
     .toLowerCase()
@@ -185,12 +181,19 @@ function detectLookalikeDomain(email: ParsedEmail, fromDomain: string | null): S
   if (!fromDomain) return undefined;
 
   const senderLabel = getDomainWithoutSuffix(fromDomain) ?? "";
-  const normalizedSenderLabel = normalizeToken(senderLabel);
+  // Tokenize on non-alphanumeric boundaries (hyphens included, so a brand
+  // token can still be found in e.g. "acme-docusign.com") so a brand name
+  // must match a whole word/label token, not any substring (e.g.
+  // "applebees.com" must not match brand "apple").
+  const senderTokens = senderLabel
+    .toLowerCase()
+    .split(/[^a-z0-9]+/)
+    .filter((part) => part.length > 0);
 
-  // A: sender domain contains a known brand token (ignoring hyphens) but
-  // isn't actually that brand's domain.
+  // A: sender domain contains a known brand token as a whole word (ignoring
+  // hyphens as separators) but isn't actually that brand's domain.
   for (const brand of BRANDS) {
-    if (normalizedSenderLabel.includes(brand.name) && !brand.domains.includes(fromDomain)) {
+    if (senderTokens.includes(brand.name) && !brand.domains.includes(fromDomain)) {
       return {
         id: "LOOKALIKE_DOMAIN",
         severity: "high",
@@ -202,8 +205,9 @@ function detectLookalikeDomain(email: ParsedEmail, fromDomain: string | null): S
   // B: From display name claims a known brand from a non-brand domain.
   const fromHeader = findHeader(email.headers, "From");
   const displayName = extractDisplayName(fromHeader?.value).toLowerCase();
+  const displayNameTokens = displayName.split(/[^a-z0-9]+/).filter((part) => part.length > 0);
   for (const brand of BRANDS) {
-    if (displayName.includes(brand.name) && !brand.domains.includes(fromDomain)) {
+    if (displayNameTokens.includes(brand.name) && !brand.domains.includes(fromDomain)) {
       return {
         id: "LOOKALIKE_DOMAIN",
         severity: "high",
@@ -241,8 +245,19 @@ function detectInternalImpersonation(email: ParsedEmail, fromDomain: string | nu
   const recipientDomain = registrableDomainOfAddress(extractEmailAddress(toHeader?.value));
   if (!recipientDomain || !fromDomain || fromDomain === recipientDomain) return undefined;
 
-  const recipientLabel = normalizeToken(getDomainWithoutSuffix(recipientDomain) ?? "");
-  if (recipientLabel.length < MIN_TOKEN_LENGTH) return undefined;
+  // Tokenize the recipient's domain label on hyphen boundaries. A hyphenated
+  // label (e.g. "smart-consulting") is a compound of genuinely separate
+  // words, so a display-name word must exactly equal one of those tokens -
+  // otherwise hyphen-stripping would silently glue unrelated words together
+  // ("smartconsulting") and let a word that merely spans that seam match by
+  // accident. An unhyphenated label (e.g. "meridianworks") has no such seam,
+  // so CLAUDE.md's literal rule applies directly: a display-name word that
+  // is part of that single label (e.g. "meridian" of "meridianworks") still
+  // counts, since there's no artificial boundary being crossed.
+  const recipientDomainLabel = getDomainWithoutSuffix(recipientDomain) ?? "";
+  const recipientTokens = labelParts(recipientDomainLabel).filter((part) => part.length >= MIN_TOKEN_LENGTH);
+  const isCompoundLabel = recipientTokens.length > 1;
+  if (recipientDomainLabel.length < MIN_TOKEN_LENGTH) return undefined;
 
   const fromHeader = findHeader(email.headers, "From");
   const replyToHeader = findHeader(email.headers, "Reply-To");
@@ -255,7 +270,10 @@ function detectInternalImpersonation(email: ParsedEmail, fromDomain: string | nu
       .filter((word) => word.length >= MIN_TOKEN_LENGTH);
 
     for (const word of words) {
-      if (recipientLabel.includes(word)) {
+      const matches = isCompoundLabel
+        ? recipientTokens.includes(word)
+        : recipientDomainLabel.toLowerCase().includes(word);
+      if (matches) {
         return {
           id: "INTERNAL_IMPERSONATION",
           severity: "medium",
