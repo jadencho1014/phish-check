@@ -33,7 +33,8 @@ const VERDICT_RANK: Record<Verdict, number> = {
 };
 
 export function combineWithLlm(floor: Verdict, llmVerdict: Verdict | null): Verdict {
-  throw new Error("not implemented");
+  if (llmVerdict === null) return floor;
+  return VERDICT_RANK[llmVerdict] > VERDICT_RANK[floor] ? llmVerdict : floor;
 }
 
 export function combine(signals: Signal[]): Verdict {
