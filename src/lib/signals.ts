@@ -67,6 +67,116 @@ function extractMentionedDomains(text: string): string[] {
   return [...domains];
 }
 
+function domainOfUrlOrHost(value: string): string | null {
+  try {
+    return getDomain(new URL(value).hostname);
+  } catch {
+    return getDomain(value);
+  }
+}
+
+// Domains mentioned as explicit http(s) URLs in free text (used to compare
+// text/plain vs html link targets; stricter than DOMAIN_MENTION_REGEX so
+// ordinary prose mentioning unrelated domains doesn't count).
+function extractUrlDomains(text: string): Set<string> {
+  const matches = text.match(/https?:\/\/[^\s<>"')]+/gi) ?? [];
+  const domains = new Set<string>();
+  for (const url of matches) {
+    const domain = domainOfUrlOrHost(url);
+    if (domain) domains.add(domain);
+  }
+  return domains;
+}
+
+function detectLinkMismatch(email: ParsedEmail): Signal | undefined {
+  // A: visible link text names a domain that differs from where the href
+  // actually points.
+  for (const link of email.links) {
+    const textDomains = extractMentionedDomains(link.text);
+    if (textDomains.length === 0) continue;
+
+    const hrefDomain = domainOfUrlOrHost(link.href);
+    if (!hrefDomain) continue;
+
+    const mismatched = textDomains.find((domain) => domain !== hrefDomain);
+    if (mismatched) {
+      return {
+        id: "LINK_MISMATCH",
+        severity: "critical",
+        evidence: `Link text "${link.text}" suggests "${mismatched}" but the link goes to "${hrefDomain}"`,
+      };
+    }
+  }
+
+  // B: the text/plain part and the html part link to different registrable
+  // domains.
+  if (email.text && email.html) {
+    const textDomains = extractUrlDomains(email.text);
+    const htmlDomains = new Set<string>();
+    for (const link of email.links) {
+      const domain = domainOfUrlOrHost(link.href);
+      if (domain) htmlDomains.add(domain);
+    }
+
+    if (textDomains.size > 0 && htmlDomains.size > 0) {
+      const overlaps = [...textDomains].some((domain) => htmlDomains.has(domain));
+      if (!overlaps) {
+        return {
+          id: "LINK_MISMATCH",
+          severity: "critical",
+          evidence: `Text part links to ${[...textDomains].join(", ")}, but the html part links to ${[...htmlDomains].join(", ")}`,
+        };
+      }
+    }
+  }
+
+  return undefined;
+}
+
+// Change-of-payment-details language: a verb ("update", "new", "change",
+// "switch", "redirect", ...) near a payment noun ("bank", "account",
+// "routing", "remittance", "wire"), in either order, plus a standalone
+// gift-card mention. Kept general per CLAUDE.md - not tied to fixture wording.
+const PAYMENT_VERB = "(?:update|updated|updating|new|change|changed|changing|switch|switched|switching|redirect|redirected|redirecting)";
+const PAYMENT_NOUN = "(?:bank|banking|account|routing|remittance|wire)";
+const PAYMENT_CHANGE_FORWARD = new RegExp(`\\b${PAYMENT_VERB}\\b[\\s\\S]{0,60}?\\b${PAYMENT_NOUN}\\b`, "i");
+const PAYMENT_CHANGE_BACKWARD = new RegExp(`\\b${PAYMENT_NOUN}\\b[\\s\\S]{0,60}?\\b${PAYMENT_VERB}\\b`, "i");
+const GIFT_CARD_REGEX = /\bgift cards?\b/i;
+
+function detectPaymentChangeRequest(email: ParsedEmail, existingSignals: Signal[]): Signal | undefined {
+  const body = `${email.text}\n${email.html}`;
+  const matches =
+    PAYMENT_CHANGE_FORWARD.test(body) || PAYMENT_CHANGE_BACKWARD.test(body) || GIFT_CARD_REGEX.test(body);
+  if (!matches) return undefined;
+
+  const hasReplyToMismatch = existingSignals.some((s) => s.id === "REPLY_TO_MISMATCH");
+  return {
+    id: "PAYMENT_CHANGE_REQUEST",
+    severity: hasReplyToMismatch ? "high" : "medium",
+    evidence: "Body requests a change to bank/payment details, or references gift cards",
+  };
+}
+
+const RISKY_EXTENSIONS = new Set(["html", "htm", "iso", "exe", "js", "lnk", "docm", "xlsm"]);
+
+function isRiskyFilename(filename: string): boolean {
+  const match = filename.toLowerCase().match(/\.([a-z0-9]+)$/);
+  const extension = match?.[1];
+  if (!extension) return false;
+  return RISKY_EXTENSIONS.has(extension);
+}
+
+function detectRiskyAttachment(email: ParsedEmail): Signal | undefined {
+  const risky = email.attachments.filter((a) => isRiskyFilename(a.filename));
+  if (risky.length === 0) return undefined;
+
+  return {
+    id: "RISKY_ATTACHMENT",
+    severity: "high",
+    evidence: `Risky attachment(s): ${risky.map((a) => a.filename).join(", ")}`,
+  };
+}
+
 function detectLookalikeDomain(email: ParsedEmail, fromDomain: string | null): Signal | undefined {
   if (!fromDomain) return undefined;
 
@@ -203,6 +313,15 @@ export function detectSignals(email: ParsedEmail): Signal[] {
 
   const internalImpersonation = detectInternalImpersonation(email, fromDomain);
   if (internalImpersonation) signals.push(internalImpersonation);
+
+  const linkMismatch = detectLinkMismatch(email);
+  if (linkMismatch) signals.push(linkMismatch);
+
+  const paymentChangeRequest = detectPaymentChangeRequest(email, signals);
+  if (paymentChangeRequest) signals.push(paymentChangeRequest);
+
+  const riskyAttachment = detectRiskyAttachment(email);
+  if (riskyAttachment) signals.push(riskyAttachment);
 
   return signals;
 }
