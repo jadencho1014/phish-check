@@ -16,7 +16,8 @@
 // parseEmail/detectSignals/llm wiring for the full analyze() pipeline lands
 // in later slices (7-8).
 
-import type { Signal, Verdict } from "./types";
+import type { AnalysisResult, Signal, Verdict } from "./types";
+import type { ResponsesClient } from "./llm";
 
 // combineWithLlm: how the LLM's verdict (or null on fallback, per llm.ts) is
 // reconciled with the rules-only floor from combine() above. Per CLAUDE.md's
@@ -48,4 +49,23 @@ export function combine(signals: Signal[]): Verdict {
   if (highCount >= 2 || (highCount >= 1 && mediumCount >= 1)) return "phishing";
   if (highCount === 1 || mediumCount >= 2 || hasInternalImpersonation) return "suspicious";
   return "likely_safe";
+}
+
+// analyzeEmail: the full parse -> signals -> llm -> combine pipeline (slice
+// 8). `client` is injected (never constructed here) so tests never touch the
+// network or need OPENAI_API_KEY - route.ts decides whether a real client
+// exists (OPENAI_API_KEY set) and passes it in, or omits it entirely, in
+// which case this returns the rules-only result "and says so" per CLAUDE.md's
+// LLM paragraph ("If the LLM fails or there's no key, return the rules-only
+// result and say so"). When the LLM succeeds, its reasons/actions/advisory
+// are used as-is; combineWithLlm still governs the final verdict floor.
+export interface AnalyzeOptions {
+  client?: ResponsesClient;
+}
+
+export async function analyzeEmail(
+  _raw: string,
+  _opts: AnalyzeOptions = {},
+): Promise<AnalysisResult> {
+  throw new Error("not implemented");
 }
