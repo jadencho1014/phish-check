@@ -1,0 +1,219 @@
+{
+  "_readme": "Ground truth for fixtures/samples. 'acceptable' = correct final verdicts (with LLM). Rules-only: phishing samples must not be likely_safe; legit samples must be likely_safe. mustHave/mustNotHave use the signal IDs in CLAUDE.md. Recipient org is derived from the To address at runtime; never hardcode it.",
+  "samples": {
+    "email-01.eml": {
+      "label": "phishing",
+      "acceptable": [
+        "phishing"
+      ],
+      "mustHave": [
+        "AUTH_FAIL"
+      ],
+      "mustNotHave": [
+        "AUTH_ALIGNED_PASS"
+      ],
+      "rationale": "Classic mailbox-quota credential harvest: SPF/DMARC fail, unknown .top domain, http link to a 'validate' page, suspension threat, generic greeting, spelling errors."
+    },
+    "email-02.eml": {
+      "label": "legitimate",
+      "acceptable": [
+        "likely_safe"
+      ],
+      "mustHave": [
+        "AUTH_ALIGNED_PASS"
+      ],
+      "mustNotHave": [
+        "REPLY_TO_MISMATCH",
+        "PAYMENT_CHANGE_REQUEST",
+        "LOOKALIKE_DOMAIN",
+        "RISKY_ATTACHMENT"
+      ],
+      "rationale": "Routine vendor invoice: aligned auth, references a specific PO, normal terms, portal link on the sender's own domain, PDF attachment, no change to payment details."
+    },
+    "email-03.eml": {
+      "label": "phishing",
+      "acceptable": [
+        "phishing",
+        "suspicious"
+      ],
+      "mustHave": [
+        "LOOKALIKE_DOMAIN"
+      ],
+      "mustNotHave": [],
+      "rationale": "E-signature lure from a lookalike domain (brand name + '-documents'); auth passes because the attacker owns the domain. Footer names the service's real domain, which differs from the sender. Uses the company owner's name as the document sender, 48h expiry pressure."
+    },
+    "email-04.eml": {
+      "label": "legitimate",
+      "acceptable": [
+        "likely_safe"
+      ],
+      "mustHave": [
+        "AUTH_ALIGNED_PASS"
+      ],
+      "mustNotHave": [
+        "REPLY_TO_MISMATCH"
+      ],
+      "rationale": "Password-change confirmation from the company's IT provider: aligned auth, references a ticket number, contains no links, and tells the user to verify via a known phone number rather than anything in the email. That out-of-band instruction is a trust cue."
+    },
+    "email-05.eml": {
+      "label": "phishing",
+      "acceptable": [
+        "phishing"
+      ],
+      "mustHave": [
+        "AUTH_FAIL"
+      ],
+      "mustNotHave": [
+        "AUTH_ALIGNED_PASS"
+      ],
+      "rationale": "Impersonates the US Department of Defense SPRS program from a commercial .com domain; DMARC fails, no DKIM. Government systems use .mil/.gov. 24-hour threat of losing contract eligibility."
+    },
+    "email-06.eml": {
+      "label": "phishing",
+      "acceptable": [
+        "phishing",
+        "suspicious"
+      ],
+      "mustHave": [
+        "INTERNAL_IMPERSONATION"
+      ],
+      "mustNotHave": [],
+      "rationale": "CEO-fraud/BEC opener: display name is the company owner (surname matches the recipient's company name) but the address is on an external mail provider; 'keep it quiet', 'email only', sent on a Saturday. Auth passes for the external provider, which proves nothing."
+    },
+    "email-07.eml": {
+      "label": "legitimate",
+      "acceptable": [
+        "likely_safe"
+      ],
+      "mustHave": [
+        "AUTH_ALIGNED_PASS"
+      ],
+      "mustNotHave": [
+        "LINK_MISMATCH",
+        "LOOKALIKE_DOMAIN"
+      ],
+      "rationale": "Ordinary marketing email from a known supplier. Urgent tone ('LAST CHANCE') but aligned auth, List-Unsubscribe, and the click-tracker is a subdomain of the sender's own domain. Tests that urgency alone does not trigger a phishing verdict."
+    },
+    "email-08.eml": {
+      "label": "phishing",
+      "acceptable": [
+        "phishing"
+      ],
+      "mustHave": [
+        "REPLY_TO_MISMATCH",
+        "PAYMENT_CHANGE_REQUEST"
+      ],
+      "mustNotHave": [],
+      "rationale": "Vendor email compromise / invoice fraud: sent from the real vendor domain with passing auth, but Reply-To goes to an external mail provider and it asks to change banking details before paying a real invoice, with time pressure. Verify by phone using a number on file."
+    },
+    "email-09.eml": {
+      "label": "phishing",
+      "acceptable": [
+        "phishing"
+      ],
+      "mustHave": [
+        "AUTH_FAIL",
+        "LINK_MISMATCH"
+      ],
+      "mustNotHave": [
+        "AUTH_ALIGNED_PASS"
+      ],
+      "rationale": "Spoofed file-share notice: From claims the real service domain but SPF softfail, DKIM signed by an unrelated relay, DMARC fail. HTML link text shows the real domain while the href goes to a '-login' lookalike over http; the plain-text part shows a different (clean) link."
+    },
+    "email-10.eml": {
+      "label": "legitimate",
+      "acceptable": [
+        "likely_safe"
+      ],
+      "mustHave": [
+        "AUTH_ALIGNED_PASS"
+      ],
+      "mustNotHave": [
+        "LINK_MISMATCH",
+        "AUTH_FAIL"
+      ],
+      "rationale": "Genuine file-share notice from the same service as email-09: aligned auth, link text and href match, both MIME parts agree, sharer is a known vendor contact on their real domain."
+    },
+    "email-16.eml": {
+      "label": "legitimate",
+      "acceptable": [
+        "likely_safe"
+      ],
+      "mustHave": [
+        "AUTH_ALIGNED_PASS"
+      ],
+      "mustNotHave": [
+        "LOOKALIKE_DOMAIN",
+        "REPLY_TO_MISMATCH",
+        "LINK_MISMATCH"
+      ],
+      "rationale": "Real payroll notification. Return-Path and SPF are on an ESP subdomain of the brand; DKIM/DMARC align at the organizational domain; all links are on brand subdomains. Tests relaxed alignment and subdomain handling."
+    },
+    "email-18.eml": {
+      "label": "legitimate",
+      "acceptable": [
+        "likely_safe"
+      ],
+      "mustHave": [
+        "AUTH_ALIGNED_PASS"
+      ],
+      "mustNotHave": [
+        "LOOKALIKE_DOMAIN"
+      ],
+      "expectAdvisory": true,
+      "rationale": "Genuine GitHub security notice (aligned auth, links only to github.com). Not phishing - but it reports account activity, so the result should include an advisory: if you did not add this key, go to github.com directly and secure the account."
+    },
+    "email-20.eml": {
+      "label": "legitimate",
+      "acceptable": [
+        "likely_safe"
+      ],
+      "mustHave": [
+        "AUTH_ALIGNED_PASS"
+      ],
+      "mustNotHave": [
+        "LOOKALIKE_DOMAIN"
+      ],
+      "expectAdvisory": true,
+      "rationale": "Genuine Microsoft account notice: From is a Microsoft subdomain, DKIM d=microsoft.com (relaxed alignment), links to account.microsoft.com. Advisory: if you did not add security info, review the account by typing the address yourself."
+    },
+    "email-22.eml": {
+      "label": "legitimate",
+      "acceptable": [
+        "likely_safe"
+      ],
+      "mustHave": [
+        "AUTH_ALIGNED_PASS"
+      ],
+      "mustNotHave": [
+        "LOOKALIKE_DOMAIN"
+      ],
+      "rationale": "Genuine DocuSign completion notice on docusign.net; 'DocuSign via <company>' display name is normal. Mentions a counterparty's email domain in the body, which must NOT trigger BODY_DOMAIN_MISMATCH (no shared token with the sender)."
+    },
+    "email-23.eml": {
+      "label": "phishing",
+      "acceptable": [
+        "phishing"
+      ],
+      "mustHave": [
+        "LOOKALIKE_DOMAIN",
+        "REPLY_TO_MISMATCH"
+      ],
+      "mustNotHave": [],
+      "rationale": "DocuSign impersonation from a hyphenated lookalike domain the attacker controls (auth passes). Reply-To goes to an external mail provider under the company owner's name; 24h deletion threat; 'reply to this email' is not how DocuSign works."
+    },
+    "email-24.eml": {
+      "label": "legitimate",
+      "acceptable": [
+        "likely_safe"
+      ],
+      "mustHave": [
+        "AUTH_ALIGNED_PASS"
+      ],
+      "mustNotHave": [
+        "LOOKALIKE_DOMAIN"
+      ],
+      "rationale": "Genuine Google Drive share: sent from google.com with aligned auth, 'Name (via Google Drive)' display name is normal, link goes to docs.google.com, sharer is a known vendor contact."
+    }
+  }
+}

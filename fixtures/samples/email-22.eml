@@ -1,0 +1,48 @@
+Return-Path: bounces@docusign.net
+Authentication-Results: mx.halvorsenmachining.com; spf=pass
+ smtp.mailfrom=docusign.net; dkim=pass header.d=docusign.net; dmarc=pass
+ header.from=docusign.net
+From: DocuSign via Keystone IT <dse_na4@docusign.net>
+To: Dana <dana.ortiz@halvorsenmachining.com>
+Subject: Completed: Keystone IT MSA - Halvorsen Machining
+Date: Thu, 17 Sep 2026 14:33:02 -0500
+Message-ID: <179020719801.82.10454512465966202963@docusign.net>
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+ boundary="===============1025915996164333651=="
+
+--===============1025915996164333651==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+
+All parties have completed the document.
+
+  Document: Keystone IT MSA - Halvorsen Machining
+  Sender: billing@keystoneit.com
+
+View or download the completed document from your DocuSign account at https:/=
+/account.docusign.com.
+
+DocuSign
+
+--===============1025915996164333651==
+Content-Type: text/html; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+MIME-Version: 1.0
+
+<div style=3D"font-family:Helvetica,Arial,sans-serif;max-width:560px;margin:a=
+uto;color:#1a1a1a">
+<p style=3D"font-size:26px;font-weight:700;color:#d9531e;margin:0 0 8px">Docu=
+Sign</p>
+<h2 style=3D"font-weight:600">Your document is complete</h2>
+<p>All parties have completed <b>Keystone IT MSA - Halvorsen Machining</b>.</=
+p><p>Sender: billing@keystoneit.com</p>
+<p><a href=3D"https://account.docusign.com" style=3D"display:inline-block;bac=
+kground:#24292f;color:#fff;padding:12px 20px;border-radius:6px;text-decoratio=
+n:none">View completed document</a></p>
+<hr style=3D"border:none;border-top:1px solid #eee">
+<p style=3D"font-size:11px;color:#888">DocuSign, Inc. 221 Main St, Suite 1550=
+, San Francisco, CA 94105<br>Do not share this email. The link above requires=
+ you to sign in.</p></div>
+
+--===============1025915996164333651==--

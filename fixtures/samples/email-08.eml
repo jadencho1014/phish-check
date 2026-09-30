@@ -1,0 +1,36 @@
+Authentication-Results: mx.halvorsenmachining.com; spf=pass
+ smtp.mailfrom=brightlinemetals.com; dkim=pass header.d=brightlinemetals.com;
+ dmarc=pass header.from=brightlinemetals.com
+From: Renee Walsh <rwalsh@brightlinemetals.com>
+To: Dana Ortiz <dana.ortiz@halvorsenmachining.com>
+Reply-To: Renee Walsh <rwalsh.brightline@mailboxpro.net>
+Subject: Updated remittance details
+Date: Mon, 21 Sep 2026 10:14:09 -0500
+Message-ID: <179020357098.226.9132240440073339837@brightlinemetals.com>
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="===============0184659401699664815=="
+
+--===============0184659401699664815==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+
+Hi Dana,
+
+We've moved our banking to a new institution. Please update our remittance de=
+tails before paying INV-40817. New details are in the attached letter.
+
+The old account will be closed at the end of the month, so please make the ch=
+ange this week.
+
+Thanks,
+Renee
+
+--===============0184659401699664815==
+Content-Type: application/pdf
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="Remittance_Update.pdf"
+MIME-Version: 1.0
+
+JVBERi0xLjQKJSBwbGFjZWhvbGRlciBsZXR0ZXIK
+
+--===============0184659401699664815==--

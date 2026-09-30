@@ -1,0 +1,38 @@
+Authentication-Results: mx.halvorsenmachining.com; spf=fail
+ smtp.mailfrom=mail-secure-notify.top; dkim=none
+ header.d=mail-secure-notify.top; dmarc=fail
+ header.from=mail-secure-notify.top
+From: Mail Administrator <admin@mail-secure-notify.top>
+To: Dana Ortiz <dana.ortiz@halvorsenmachining.com>
+Subject: URGENT!! Your Mailbox Is Almost Full (98%)
+Date: Mon, 14 Sep 2026 03:12:44 +0000
+Message-ID: <179020357097.226.8954532306863810150@mail-secure-notify.top>
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+ boundary="===============7246758564795050870=="
+
+--===============7246758564795050870==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+
+Dear User,
+
+Your mailbox has exceed it storage limit and you will not be able to recieve =
+new messages. To avoid lose of email please validate your account immediatly:
+
+http://mail-secure-notify.top/validate?u=3Ddana.ortiz
+
+Failure to validate within 24 hours will result in account suspenson.
+
+Mail Admin Team
+
+--===============7246758564795050870==
+Content-Type: text/html; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+MIME-Version: 1.0
+
+<p>Dear User,</p><p>Your mailbox has exceed it storage limit. Please <a href=
+=3D'http://mail-secure-notify.top/validate?u=3Ddana.ortiz'>VALIDATE NOW</a> t=
+o avoid account suspenson.</p><p>Mail Admin Team</p>
+
+--===============7246758564795050870==--

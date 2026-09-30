@@ -1,0 +1,47 @@
+Return-Path: bounces@docu-sign-secure.com
+Authentication-Results: mx.halvorsenmachining.com; spf=pass
+ smtp.mailfrom=docu-sign-secure.com; dkim=pass header.d=docu-sign-secure.com;
+ dmarc=pass header.from=docu-sign-secure.com
+From: DocuSign <notify@docu-sign-secure.com>
+To: Dana <dana.ortiz@halvorsenmachining.com>
+Reply-To: Mark Halvorsen <mark.h.docs@mailboxpro.net>
+Subject: You have a document waiting - action required
+Date: Fri, 18 Sep 2026 08:55:19 -0400
+Message-ID: <179020719801.82.2474885881233731367@docu-sign-secure.com>
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+ boundary="===============3343571426651169725=="
+
+--===============3343571426651169725==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Mark Halvorsen has sent you a document that requires your signature.
+
+REVIEW AND SIGN: https://docu-sign-secure.com/sign?d=8842
+
+This document will be deleted in 24 hours if not signed.
+
+Powered by DocuSign
+
+--===============3343571426651169725==
+Content-Type: text/html; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+MIME-Version: 1.0
+
+<div style=3D"font-family:Helvetica,Arial,sans-serif;max-width:560px;margin:a=
+uto;color:#1a1a1a">
+<p style=3D"font-size:26px;font-weight:700;color:#d9531e;margin:0 0 8px">Docu=
+Sign</p>
+<h2 style=3D"font-weight:600">You have a document to sign</h2>
+<p><b>Mark Halvorsen</b> has sent you a document that requires your signature=
+.</p><p style=3D'color:#b00'>This document will be deleted in 24 hours if not=
+ signed.</p>
+<p><a href=3D"https://docu-sign-secure.com/sign?d=3D8842" style=3D"display:in=
+line-block;background:#24292f;color:#fff;padding:12px 20px;border-radius:6px;=
+text-decoration:none">Review and sign</a></p>
+<hr style=3D"border:none;border-top:1px solid #eee">
+<p style=3D"font-size:11px;color:#888">Powered by DocuSign. If you have quest=
+ions, reply to this email.</p></div>
+
+--===============3343571426651169725==--

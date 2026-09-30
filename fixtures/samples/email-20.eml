@@ -1,0 +1,50 @@
+Return-Path: bounces@accountprotection.microsoft.com
+Authentication-Results: mx.halvorsenmachining.com; spf=pass
+ smtp.mailfrom=accountprotection.microsoft.com; dkim=pass
+ header.d=microsoft.com; dmarc=pass
+ header.from=accountprotection.microsoft.com
+From: Microsoft account team
+ <account-security-noreply@accountprotection.microsoft.com>
+To: Dana <dana.ortiz@halvorsenmachining.com>
+Subject: Microsoft account security info was added
+Date: Wed, 16 Sep 2026 11:09:44 +0000
+Message-ID:
+ <179020719800.82.297880121986444212@accountprotection.microsoft.com>
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+ boundary="===============4353045052199585839=="
+
+--===============4353045052199585839==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+
+Microsoft account
+
+Security info was added to the account dana.ortiz@halvorsenmachining.com.
+
+If this was you, you can safely ignore this email. If this wasn't you, go to =
+https://account.microsoft.com/security to review your security info.
+
+Thanks,
+The Microsoft account team
+
+--===============4353045052199585839==
+Content-Type: text/html; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+MIME-Version: 1.0
+
+<div style=3D"font-family:Helvetica,Arial,sans-serif;max-width:560px;margin:a=
+uto;color:#1a1a1a">
+<p style=3D"font-size:26px;font-weight:700;color:#0078d4;margin:0 0 8px">Micr=
+osoft</p>
+<h2 style=3D"font-weight:600">Security info was added</h2>
+<p>Security info was added to <b>dana.ortiz@halvorsenmachining.com</b>.</p><p=
+>If this was you, no action is needed.</p>
+<p><a href=3D"https://account.microsoft.com/security" style=3D"display:inline=
+-block;background:#24292f;color:#fff;padding:12px 20px;border-radius:6px;text=
+-decoration:none">Review security info</a></p>
+<hr style=3D"border:none;border-top:1px solid #eee">
+<p style=3D"font-size:11px;color:#888">Microsoft Corporation, One Microsoft W=
+ay, Redmond, WA 98052</p></div>
+
+--===============4353045052199585839==--

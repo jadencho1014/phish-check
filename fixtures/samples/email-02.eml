@@ -1,0 +1,34 @@
+Authentication-Results: mx.halvorsenmachining.com; spf=pass
+ smtp.mailfrom=brightlinemetals.com; dkim=pass header.d=brightlinemetals.com;
+ dmarc=pass header.from=brightlinemetals.com
+From: Brightline Metals Billing <billing@brightlinemetals.com>
+To: Dana Ortiz <dana.ortiz@halvorsenmachining.com>
+Subject: Invoice INV-40817 for PO 22-1193
+Date: Tue, 15 Sep 2026 14:05:10 -0500
+Message-ID: <179020357097.226.8037847120920941434@brightlinemetals.com>
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="===============3509134060008983215=="
+
+--===============3509134060008983215==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+
+Hi Dana,
+
+Attached is invoice INV-40817 for PO 22-1193 (6061 aluminum bar stock, 40 uni=
+ts). Terms are Net 30 as usual. You can also view it in the customer portal a=
+t https://portal.brightlinemetals.com/invoices.
+
+Thanks,
+Renee Walsh
+Accounts Receivable, Brightline Metals
+
+--===============3509134060008983215==
+Content-Type: application/pdf
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="INV-40817.pdf"
+MIME-Version: 1.0
+
+JVBERi0xLjQKJSBwbGFjZWhvbGRlciBpbnZvaWNlCg==
+
+--===============3509134060008983215==--

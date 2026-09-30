@@ -1,0 +1,40 @@
+Authentication-Results: mx.halvorsenmachining.com; spf=pass
+ smtp.mailfrom=signflow-documents.net; dkim=pass
+ header.d=signflow-documents.net; dmarc=pass
+ header.from=signflow-documents.net
+From: SignFlow <no-reply@signflow-documents.net>
+To: Dana Ortiz <dana.ortiz@halvorsenmachining.com>
+Subject: Mark Halvorsen sent you a document to review and sign
+Date: Wed, 16 Sep 2026 09:41:02 -0400
+Message-ID: <179020357098.226.15462549447899553185@signflow-documents.net>
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+ boundary="===============7830152404152516740=="
+
+--===============7830152404152516740==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Mark Halvorsen sent you a document to review and sign.
+
+Document: 2027 Subcontract Agreement - Revised.pdf
+
+REVIEW DOCUMENT: https://signflow-documents.net/s/7Hq2kP
+
+This link expires in 48 hours.
+
+SignFlow - Sign anything, anywhere.
+
+--===============7830152404152516740==
+Content-Type: text/html; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+MIME-Version: 1.0
+
+<div style=3D'font-family:Arial'><p><b>Mark Halvorsen</b> sent you a document=
+ to review and sign.</p><p>2027 Subcontract Agreement - Revised.pdf</p><p><a =
+href=3D'https://signflow-documents.net/s/7Hq2kP' style=3D'background:#2b6cb0;=
+color:#fff;padding:10px 16px'>REVIEW DOCUMENT</a></p><p style=3D'color:#888;f=
+ont-size:12px'>This link expires in 48 hours. SignFlow, Inc. | signflow.com</=
+p></div>
+
+--===============7830152404152516740==--

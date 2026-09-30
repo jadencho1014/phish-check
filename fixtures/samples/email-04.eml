@@ -1,0 +1,21 @@
+Authentication-Results: mx.halvorsenmachining.com; spf=pass
+ smtp.mailfrom=keystoneit.com; dkim=pass header.d=keystoneit.com; dmarc=pass
+ header.from=keystoneit.com
+From: Keystone IT Support <support@keystoneit.com>
+To: Dana Ortiz <dana.ortiz@halvorsenmachining.com>
+Subject: Your password was changed
+Date: Thu, 17 Sep 2026 16:22:37 -0500
+Message-ID: <179020357098.226.4282593630225120447@keystoneit.com>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+MIME-Version: 1.0
+
+Hi Dana,
+
+This confirms your Halvorsen Machining account password was changed today at =
+4:21 PM CT, per ticket #58213 you opened with our helpdesk.
+
+If you did not request this, call the Keystone IT helpdesk at the number on y=
+our IT support card. Do not reply to this email.
+
+Keystone IT

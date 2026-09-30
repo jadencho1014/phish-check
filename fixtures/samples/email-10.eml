@@ -1,0 +1,32 @@
+Authentication-Results: mx.halvorsenmachining.com; spf=pass
+ smtp.mailfrom=cloudvault.com; dkim=pass header.d=cloudvault.com; dmarc=pass
+ header.from=cloudvault.com
+From: Cloudvault <notifications@cloudvault.com>
+To: Dana Ortiz <dana.ortiz@halvorsenmachining.com>
+Subject: Renee Walsh shared "Brightline W-9 2026.pdf" with you
+Date: Tue, 22 Sep 2026 13:02:17 -0500
+Message-ID: <179020357099.226.1222481218337112677@cloudvault.com>
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+ boundary="===============6054322765326163636=="
+
+--===============6054322765326163636==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Renee Walsh (rwalsh@brightlinemetals.com) shared a file with you.
+
+Brightline W-9 2026.pdf
+
+Open: https://cloudvault.com/f/9kd21
+
+--===============6054322765326163636==
+Content-Type: text/html; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+MIME-Version: 1.0
+
+<p>Renee Walsh (rwalsh@brightlinemetals.com) shared a file with you.</p><p><b=
+>Brightline W-9 2026.pdf</b></p><p><a href=3D'https://cloudvault.com/f/9kd21'=
+>https://cloudvault.com/f/9kd21</a></p>
+
+--===============6054322765326163636==--

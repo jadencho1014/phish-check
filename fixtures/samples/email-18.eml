@@ -1,0 +1,52 @@
+Return-Path: bounces@github.com
+Authentication-Results: mx.halvorsenmachining.com; spf=pass
+ smtp.mailfrom=github.com; dkim=pass header.d=github.com; dmarc=pass
+ header.from=github.com
+From: GitHub <noreply@github.com>
+To: Dana <dana.ortiz@halvorsenmachining.com>
+Subject: [GitHub] A new SSH key was added to your account
+Date: Mon, 14 Sep 2026 15:22:10 -0700
+Message-ID: <179020719800.82.3101517033551956604@github.com>
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+ boundary="===============6847417589830182438=="
+
+--===============6847417589830182438==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+
+Hi leeatomus,
+
+A new SSH key was added to your account:
+
+  Title: work-laptop
+  Fingerprint: SHA256:9dTk...Q1
+
+If you did not expect this, visit https://github.com/settings/keys to review =
+your keys and see https://docs.github.com/authentication for help securing yo=
+ur account.
+
+Thanks,
+The GitHub Team
+
+--===============6847417589830182438==
+Content-Type: text/html; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+MIME-Version: 1.0
+
+<div style=3D"font-family:Helvetica,Arial,sans-serif;max-width:560px;margin:a=
+uto;color:#1a1a1a">
+<p style=3D"font-size:26px;font-weight:700;color:#24292f;margin:0 0 8px">GitH=
+ub</p>
+<h2 style=3D"font-weight:600">A new SSH key was added</h2>
+<p>Hi <b>leeatomus</b>, a new SSH key (<code>work-laptop</code>) was added to=
+ your account.</p><p>If this wasn&rsquo;t you, review your keys below.</p>
+<p><a href=3D"https://github.com/settings/keys" style=3D"display:inline-block=
+;background:#24292f;color:#fff;padding:12px 20px;border-radius:6px;text-decor=
+ation:none">Review SSH keys</a></p>
+<hr style=3D"border:none;border-top:1px solid #eee">
+<p style=3D"font-size:11px;color:#888">GitHub, Inc. 88 Colin P Kelly Jr St, S=
+an Francisco, CA 94107<br>You&rsquo;re receiving this because of security act=
+ivity on your account.</p></div>
+
+--===============6847417589830182438==--

@@ -1,0 +1,35 @@
+Authentication-Results: mx.halvorsenmachining.com; spf=pass
+ smtp.mailfrom=carbidedirect.com; dkim=pass header.d=carbidedirect.com;
+ dmarc=pass header.from=carbidedirect.com
+From: Carbide Direct <deals@carbidedirect.com>
+To: Dana Ortiz <dana.ortiz@halvorsenmachining.com>
+Subject: LAST CHANCE: 30% off end mills ends TONIGHT
+Date: Sun, 20 Sep 2026 18:00:00 -0400
+Message-ID: <179020357098.226.12419240819410155656@carbidedirect.com>
+List-Unsubscribe: <https://www.carbidedirect.com/unsubscribe>
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+ boundary="===============3045060356368294519=="
+
+--===============3045060356368294519==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+
+Final hours! 30% off all solid carbide end mills. Ends at midnight.
+
+Shop now: https://www.carbidedirect.com/sale?utm_source=3Demail
+
+You're receiving this because you're a Carbide Direct customer. Unsubscribe: =
+https://www.carbidedirect.com/unsubscribe
+
+--===============3045060356368294519==
+Content-Type: text/html; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+MIME-Version: 1.0
+
+<h1>LAST CHANCE</h1><p>30% off all solid carbide end mills. Ends at midnight.=
+</p><p><a href=3D'https://click.carbidedirect.com/t/a8f3?u=3Dhttps%3A%2F%2Fww=
+w.carbidedirect.com%2Fsale'>SHOP NOW</a></p><p style=3D'font-size:11px'><a hr=
+ef=3D'https://www.carbidedirect.com/unsubscribe'>Unsubscribe</a></p>
+
+--===============3045060356368294519==--

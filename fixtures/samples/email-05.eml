@@ -1,0 +1,21 @@
+Authentication-Results: mx.halvorsenmachining.com; spf=pass
+ smtp.mailfrom=sprs-dod-support.com; dkim=none header.d=sprs-dod-support.com;
+ dmarc=fail header.from=sprs-dod-support.com
+From: DoD SPRS Compliance <compliance@sprs-dod-support.com>
+To: Dana Ortiz <dana.ortiz@halvorsenmachining.com>
+Subject: ACTION REQUIRED: Your SPRS score expires in 24 hours
+Date: Fri, 18 Sep 2026 07:03:55 -0400
+Message-ID: <179020357098.226.11574785639423801093@sprs-dod-support.com>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+MIME-Version: 1.0
+
+Halvorsen Machining,
+
+Our records show your Supplier Performance Risk System (SPRS) assessment scor=
+e will expire in 24 hours. Contractors with an expired score are ineligible f=
+or new DoD awards.
+
+Re-verify your CAGE code and score here: https://sprs-dod-support.com/reverify
+
+Department of Defense - SPRS Program Office

