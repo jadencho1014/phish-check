@@ -16,4 +16,10 @@ export const BRANDS: Brand[] = [
   { name: "paypal", domains: ["paypal.com"] },
   { name: "amazon", domains: ["amazon.com"] },
   { name: "apple", domains: ["apple.com"] },
+  { name: "chase", domains: ["chase.com"] },
+  { name: "bank of america", domains: ["bankofamerica.com"] },
+  { name: "wells fargo", domains: ["wellsfargo.com"] },
+  { name: "usps", domains: ["usps.com"] },
+  { name: "fedex", domains: ["fedex.com"] },
+  { name: "ups", domains: ["ups.com"] },
 ];

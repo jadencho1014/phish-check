@@ -18,7 +18,11 @@ export const analysisResultSchema = z.object({
   verdict: z.enum(["phishing", "suspicious", "likely_safe"]),
   reasons: z.array(z.object({ title: z.string(), explanation: z.string() })),
   actions: z.array(z.string()),
-  advisory: z.string().optional(),
+  // The real Responses API (strict mode) always sends `advisory`, using
+  // `null` for "no advisory" rather than omitting the key. Accept all three
+  // shapes: omitted, null, or a string; normalized to `string | undefined`
+  // in callLlm before constructing the returned AnalysisResult.
+  advisory: z.string().nullable().optional(),
 });
 
 export interface LlmLinkPair {
@@ -68,9 +72,15 @@ const RESPONSE_JSON_SCHEMA = {
       },
     },
     actions: { type: "array", items: { type: "string" } },
-    advisory: { type: "string" },
+    // OpenAI's Structured Outputs (strict mode) requires every property to be
+    // listed in `required`; optional fields must be modeled as nullable
+    // instead of actually optional.
+    advisory: {
+      type: ["string", "null"],
+      description: "Guidance for a genuine account-activity notice, or null if none applies.",
+    },
   },
-  required: ["verdict", "reasons", "actions"],
+  required: ["verdict", "reasons", "actions", "advisory"],
   additionalProperties: false,
 } as const;
 
@@ -151,7 +161,10 @@ export async function callLlm(
     const result = analysisResultSchema.safeParse(parsed);
     if (!result.success) return null;
 
-    return result.data;
+    // Normalize the real API's `advisory: null` (as well as the mocked
+    // tests' omitted-key shape) to `string | undefined` per AnalysisResult.
+    const { advisory, ...rest } = result.data;
+    return { ...rest, advisory: advisory ?? undefined };
   } catch {
     return null;
   }
