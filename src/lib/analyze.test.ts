@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { combine } from "./analyze";
+import { combine, combineWithLlm } from "./analyze";
 import type { Signal } from "./types";
 
 // Pure combine() tests: Signal[] -> rules-floor Verdict. See CLAUDE.md's
@@ -41,5 +41,22 @@ describe("combine", () => {
     expect(combine([sig("AUTH_ALIGNED_PASS", "trust"), sig("AUTH_FAIL", "high")])).toBe(
       "suspicious",
     );
+  });
+});
+
+// combineWithLlm(): reconciling the rules-only floor with the LLM's verdict
+// (or null when llm.ts falls back, per CLAUDE.md's "LLM" paragraph). The LLM
+// can only raise, never lower, the floor.
+describe("combineWithLlm", () => {
+  it("the LLM cannot lower the rules floor (suspicious floor, likely_safe from LLM -> suspicious)", () => {
+    expect(combineWithLlm("suspicious", "likely_safe")).toBe("suspicious");
+  });
+
+  it("the LLM can raise the rules floor (likely_safe floor, phishing from LLM -> phishing)", () => {
+    expect(combineWithLlm("likely_safe", "phishing")).toBe("phishing");
+  });
+
+  it("a null LLM verdict (fallback: no key, invalid response, or timeout) keeps the floor as-is", () => {
+    expect(combineWithLlm("suspicious", null)).toBe("suspicious");
   });
 });

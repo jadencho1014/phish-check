@@ -18,6 +18,24 @@
 
 import type { Signal, Verdict } from "./types";
 
+// combineWithLlm: how the LLM's verdict (or null on fallback, per llm.ts) is
+// reconciled with the rules-only floor from combine() above. Per CLAUDE.md's
+// "Combine" rule, "the rules set a floor; the LLM can raise the verdict but
+// never lower it below the floor. If the LLM fails ... return the rules-only
+// result." This lives in analyze.ts (not llm.ts) because CLAUDE.md's file
+// layout assigns the final combine step to analyze.ts's
+// parse -> signals -> llm -> combine pipeline; llm.ts only calls the model
+// and validates its shape. Full parse->signals->llm wiring lands in slice 8.
+const VERDICT_RANK: Record<Verdict, number> = {
+  likely_safe: 0,
+  suspicious: 1,
+  phishing: 2,
+};
+
+export function combineWithLlm(floor: Verdict, llmVerdict: Verdict | null): Verdict {
+  throw new Error("not implemented");
+}
+
 export function combine(signals: Signal[]): Verdict {
   const hasCritical = signals.some((s) => s.severity === "critical");
   if (hasCritical) return "phishing";
